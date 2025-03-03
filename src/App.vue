@@ -18,8 +18,7 @@
               <div class="item-actions">
                 <div class="quantity-selector">
                   <button class="quantity-change-button" @click="decreaseOne(item.id)">-</button>
-                  <input type="text" class="quantity-input" v-model.number="item.quantity"
-                    aria-label="quantity">
+                  <input type="text" class="quantity-input" v-model.number="item.quantity" aria-label="quantity">
                   <button class="quantity-change-button" @click="increaseOne(item.id)">+</button>
                 </div>
                 <button class="remove-item" @click="removeItem(item.id)">✕</button>
@@ -32,23 +31,23 @@
           <h2>Order summary</h2>
           <button class="toggle-details-button" @click="hideDetails = !hideDetails">{{ hideDetails ? 'Show Details' :
             'Hide Details' }}</button>
-          <div :class="{'hide-order-details': hideDetails}">
+          <div :class="{ 'hide-order-details': hideDetails }">
             <div class="summary-item">
               <span>Subtotal</span>
-              <span>$13900</span>
+              <span>${{ subtotal }}</span>
             </div>
             <div class="summary-item">
               <span>Shipping estimate</span>
-              <span>$100</span>
+              <span>${{ shippingEstimate }}</span>
             </div>
             <div class="summary-item">
               <span>Tax estimate</span>
-              <span>$1112</span>
+              <span>${{ taxEstimate }}</span>
             </div>
           </div>
           <div class="summary-total">
             <strong>Order total</strong>
-            <strong>$15112</strong>
+            <strong>${{ total }}</strong>
           </div>
           <button class="checkout-button">Checkout</button>
         </div>
@@ -58,7 +57,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 let username = 'Harry'
 let shoppingCartItems = ref([
@@ -108,15 +107,15 @@ let hideDetails = ref(false)
 
 function decreaseOne(id) {
   shoppingCartItems.value.some(item => {
-    if(item.id == id && item.quantity != 0) {
-      item.quantity = item.quantity -1
+    if (item.id == id && item.quantity != 0) {
+      item.quantity = item.quantity - 1
     }
   })
 }
 
 function increaseOne(id) {
   shoppingCartItems.value.some(item => {
-    if(item.id == id) {
+    if (item.id == id) {
       item.quantity = item.quantity + 1
     }
   })
@@ -130,6 +129,32 @@ function removeItem(id) {
   // Step 2: delete item from list
   shoppingCartItems.value.splice(index, 1)
 }
+
+let subtotal = computed(() =>
+  shoppingCartItems.value.reduce(
+    (acc, item) => acc + item.price * item.quantity,
+    0
+  )
+)
+
+let shippingEstimate = computed(() => (subtotal.value > 10000 ? 100 : 50))
+
+let taxEstimate = computed(() => subtotal.value * 0.08)
+
+let total = computed(
+  () => subtotal.value + shippingEstimate.value + taxEstimate.value
+)
+
+watch(
+  shoppingCartItems,
+  () => {
+    localStorage.setItem(
+      'hogwartsShoppingCart',
+      JSON.stringify(shoppingCartItems.value)
+    )
+  },
+  { deep: true }
+)
 </script>
 
 <style scoped>
